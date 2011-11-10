@@ -1,10 +1,10 @@
 __author__ = 'will'
 import re
-import os
+import csv
 from mechanize import Browser
 from multiprocessing import Pool
 from BeautifulSoup import BeautifulSoup
-from itertools import groupby, tee
+from itertools import groupby, tee, izip
 import logging
 import argparse
 
@@ -25,9 +25,10 @@ def ReadData(html):
 
 
 
-def SubmitELMServer(input_seq):
+def SubmitELMServer(input_tup):
     """Submits a query to the ELM webtool and returns a HTML of the response"""
 
+    input_name, input_seq = input_tup
     browser = Browser()
     base_url = 'http://elm.eu.org/'
 
@@ -42,7 +43,7 @@ def SubmitELMServer(input_seq):
     nurl = base_url+tag['content'][loc+4:]
 
     dataresp = browser.open(nurl)
-    return dataresp.read()
+    return input_name, dataresp.read()
 
 
 
@@ -57,21 +58,37 @@ def fasta_iter(fasta_file):
                 seq = ''.join(x.strip() for x in lines)
                 yield header, seq
 
+def extract_numbers(instr):
+    return [int(x) for x in re.findall('(\d+)', instr)]
+
+def process_fasta_file(fasta_file, out_file, num_processes):
+
+    pool = Pool(processes = num_processes)
+
+    outgen = pool.imap(fasta_iter(fasta_file), SubmitELMServer, chunksize=2*num_processes)
+
+    with open(out_file, 'w') as handle:
+        writer = csv.writer(handle, delimiter = '\t')
+        writer.writerow(['Header', 'ELM', 'Start', 'End', 'Match'])
+        for name, html in outgen:
+            for elm, pos in ReadData(html):
+                out = [name, elm] + extract_numbers(pos[0]) + [pos[1]]
+                writer.writerow(out)
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser('Web ELM Parser')
     parser.add_argument('-i', '--input_file',
-                        dest = 'INPUT_FASTA_FILE',
+                        dest = 'ifile',
                         type=str,
                         help = 'Input File Path')
     parser.add_argument('-o', '--output_file',
-                        dest = 'OUTPUT_FILE',
+                        dest = 'ofile',
                         type=str,
                         default = 'elm_results.txt',
                         help = 'Output File Path')
     parser.add_argument('-t', '--threads',
-                        dest = 'NUM_THREADS',
+                        dest = 'threads',
                         default = 10,
                         type = 'int',
                         help = 'Number of Threads to use for the ELM server')
@@ -79,3 +96,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
+    process_fasta_file(args.ifile, args.ofile, args.threads)
