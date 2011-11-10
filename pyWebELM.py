@@ -35,7 +35,7 @@ def SubmitELMServer(input_tup):
     browser.open(base_url)
     browser.select_form(nr=0)
     browser['sequence'] = input_seq
-    oresp = browser.submit_form()
+    oresp = browser.submit()
     nhtml = oresp.read()
     soup = BeautifulSoup(nhtml)
     tag = soup.find('meta', attrs = {'http-equiv':'REFRESH'})
@@ -65,7 +65,7 @@ def process_fasta_file(fasta_file, out_file, num_processes):
 
     pool = Pool(processes = num_processes)
 
-    outgen = pool.imap(fasta_iter(fasta_file), SubmitELMServer, chunksize=2*num_processes)
+    outgen = pool.imap(SubmitELMServer, fasta_iter(fasta_file), chunksize=2*num_processes)
 
     with open(out_file, 'w') as handle:
         writer = csv.writer(handle, delimiter = '\t')
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--threads',
                         dest = 'threads',
                         default = 10,
-                        type = 'int',
+                        type = int,
                         help = 'Number of Threads to use for the ELM server')
 
     args = parser.parse_args()
