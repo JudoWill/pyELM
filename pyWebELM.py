@@ -71,7 +71,9 @@ def process_fasta_file(fasta_file, out_file, num_processes):
         writer = csv.writer(handle, delimiter = '\t')
         writer.writerow(['Header', 'ELM', 'Start', 'End', 'Match'])
         for name, html in outgen:
-            for elm, pos in ReadData(html):
+            out = ReadData(html)
+            logging.warning('%s had %i matches' % (name, len(out)))
+            for elm, pos in out:
                 out = [name, elm] + extract_numbers(pos[0]) + [pos[1]]
                 writer.writerow(out)
 
