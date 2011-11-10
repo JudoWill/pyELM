@@ -4,6 +4,7 @@ import os
 from mechanize import Browser
 from multiprocessing import Pool
 from BeautifulSoup import BeautifulSoup
+from itertools import groupby, tee
 import logging
 import argparse
 
@@ -45,7 +46,16 @@ def SubmitELMServer(input_seq):
 
 
 
+def fasta_iter(fasta_file):
 
+    with open(fasta_file) as handle:
+        header = None
+        for key, lines in groupby(handle, lambda x: x.startswith('>')):
+            if key:
+                header = lines.next().strip()[1:]
+            else:
+                seq = ''.join(x.strip() for x in lines)
+                yield header, seq
 
 
 if __name__ == '__main__':
