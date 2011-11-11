@@ -75,7 +75,11 @@ def process_fasta_file(fasta_file, out_file, num_processes):
         writer.writerow(['Header', 'ELM', 'Start', 'End', 'Match'])
         for name, html in outgen:
             if html:
-                out = ReadData(html)
+                try:
+                    out = ReadData(html)
+                except:
+                    continue
+
                 logging.warning('%s had %i matches' % (name, len(out)))
                 for elm, pos in out:
                     out = [name, elm] + extract_numbers(pos[0]) + [pos[1]]
