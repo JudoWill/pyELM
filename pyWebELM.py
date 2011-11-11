@@ -83,10 +83,10 @@ def process_fasta_file(fasta_file, out_file, num_processes):
                 logging.warning('%s had %i matches' % (name, len(out)))
                 for elm, pos in out:
                     try:
-                        out = [name, elm] + extract_numbers(pos[0]) + [pos[1]]
+                        outrow = [name, elm] + extract_numbers(pos[0]) + [pos[1]]
                     except:
                         continue
-                    writer.writerow(out)
+                    writer.writerow(outrow)
             else:
                 logging.warning('%s had no ELMs' % name)
 
