@@ -32,18 +32,21 @@ def SubmitELMServer(input_tup):
     browser = Browser()
     base_url = 'http://elm.eu.org/'
 
-    browser.open(base_url)
-    browser.select_form(nr=0)
-    browser['sequence'] = input_seq
-    oresp = browser.submit()
-    nhtml = oresp.read()
-    soup = BeautifulSoup(nhtml)
-    tag = soup.find('meta', attrs = {'http-equiv':'REFRESH'})
-    loc = tag['content'].find('URL=')
-    nurl = base_url+tag['content'][loc+4:]
+    try:
+        browser.open(base_url)
+        browser.select_form(nr=0)
+        browser['sequence'] = input_seq
+        oresp = browser.submit()
+        nhtml = oresp.read()
+        soup = BeautifulSoup(nhtml)
+        tag = soup.find('meta', attrs = {'http-equiv':'REFRESH'})
+        loc = tag['content'].find('URL=')
+        nurl = base_url+tag['content'][loc+4:]
 
-    dataresp = browser.open(nurl)
-    return input_name, dataresp.read()
+        dataresp = browser.open(nurl)
+        return input_name, dataresp.read()
+    except:
+        return input_name, None
 
 
 
@@ -71,11 +74,14 @@ def process_fasta_file(fasta_file, out_file, num_processes):
         writer = csv.writer(handle, delimiter = '\t')
         writer.writerow(['Header', 'ELM', 'Start', 'End', 'Match'])
         for name, html in outgen:
-            out = ReadData(html)
-            logging.warning('%s had %i matches' % (name, len(out)))
-            for elm, pos in out:
-                out = [name, elm] + extract_numbers(pos[0]) + [pos[1]]
-                writer.writerow(out)
+            if html:
+                out = ReadData(html)
+                logging.warning('%s had %i matches' % (name, len(out)))
+                for elm, pos in out:
+                    out = [name, elm] + extract_numbers(pos[0]) + [pos[1]]
+                    writer.writerow(out)
+            else:
+                logging.warning('%s had no ELMs' % name)
 
 if __name__ == '__main__':
 
